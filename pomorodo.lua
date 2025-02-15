@@ -7,26 +7,21 @@ local obs = obslua
 local source_name = "PomodoroTimer" -- Name of your text source in OBS
 local sound_source_name = "AlertSound" -- Name of your media source for playing sound
 
-local focus_duration_minutes = 90 -- Focus duration (minutes)
-local short_break_minutes = 15 -- Short break duration (minutes)
-local long_break_minutes = 20 -- Long break duration (minutes)
+local focus_duration_minutes = 60 -- Focus duration (minutes)
+local short_break_minutes = 10 -- Short break duration (minutes)
+local long_break_minutes = 10 -- Long break duration (minutes)
 
 -- Customizable messages
 local focus_message = "Focus Time!"
 local short_break_message = "Short Break!"
 local long_break_message = "Long Break!"
 
--- Session limit for focus sessions (only used when not testing breaks)
+-- Maximum focus sessions before stopping the timer
 local session_limit = 4
-
--- Testing Mode for break transitions:
--- When true, the timer simply alternates between focus and break modes,
--- ignoring session count and long break durations.
-local test_breaks = false
 
 -- Fast mode: when enabled, time passes faster for testing purposes.
 -- In fast mode, each real second simulates 60 seconds (1 minute) of timer time.
-local fast_mode = true
+local fast_mode = false
 local time_multiplier = fast_mode and 60 or 1
 
 ----------------------------------------------------------
@@ -92,8 +87,6 @@ local function load_config(settings)
 	short_break_message = obs.obs_data_get_string(settings, "short_break_message") or short_break_message
 	long_break_message = obs.obs_data_get_string(settings, "long_break_message") or long_break_message
 
-	test_breaks = obs.obs_data_get_bool(settings, "test_breaks")
-
 	fast_mode = obs.obs_data_get_bool(settings, "fast_mode")
 	time_multiplier = fast_mode and 60 or 1
 end
@@ -112,23 +105,18 @@ local function timer_callback()
 	time_left = time_left - time_multiplier
 
 	if time_left <= 0 then
-		if test_breaks then
-			-- Testing mode: simple toggle between focus and break.
-			if mode == "focus" then
-				mode = "short_break"
-				time_left = short_break_minutes * 60
-				set_timer_text(short_break_message)
+		if mode == "focus" then
+			session_count = session_count + 1
+			-- If maximum focus sessions reached, stop the timer.
+			if session_count >= session_limit then
+				timer_active = false
+				obs.timer_remove(timer_callback)
+				set_timer_text("Timer Completed")
+				play_sound()
+				return
 			else
-				mode = "focus"
-				time_left = focus_duration_minutes * 60
-				set_timer_text(focus_message)
-			end
-			play_sound()
-		else
-			-- Regular mode: use session count logic.
-			if mode == "focus" then
-				session_count = session_count + 1
-				if session_count % session_limit == 0 then
+				-- Determine break type; use long break every 4 sessions.
+				if session_count % 4 == 0 then
 					mode = "long_break"
 					time_left = long_break_minutes * 60
 					set_timer_text(long_break_message)
@@ -138,12 +126,12 @@ local function timer_callback()
 					set_timer_text(short_break_message)
 				end
 				play_sound()
-			else
-				mode = "focus"
-				time_left = focus_duration_minutes * 60
-				set_timer_text(focus_message)
-				play_sound()
 			end
+		else
+			mode = "focus"
+			time_left = focus_duration_minutes * 60
+			set_timer_text(focus_message)
+			play_sound()
 		end
 	else
 		set_timer_text(format_time(time_left))
@@ -180,6 +168,10 @@ _G.stop_timer = stop_timer
 local function script_properties()
 	local props = obs.obs_properties_create()
 
+	-- Start and Stop buttons at the top
+	obs.obs_properties_add_button(props, "start_button", "Start Timer", start_timer)
+	obs.obs_properties_add_button(props, "stop_button", "Stop Timer", stop_timer)
+
 	obs.obs_properties_add_text(props, "source_name", "Text Source Name", obs.OBS_TEXT_DEFAULT)
 	obs.obs_properties_add_text(props, "sound_source_name", "Sound Source Name", obs.OBS_TEXT_DEFAULT)
 	obs.obs_properties_add_int(props, "focus_duration_minutes", "Focus Duration (minutes)", 1, 180, 1)
@@ -188,10 +180,7 @@ local function script_properties()
 	obs.obs_properties_add_text(props, "focus_message", "Focus Message", obs.OBS_TEXT_DEFAULT)
 	obs.obs_properties_add_text(props, "short_break_message", "Short Break Message", obs.OBS_TEXT_DEFAULT)
 	obs.obs_properties_add_text(props, "long_break_message", "Long Break Message", obs.OBS_TEXT_DEFAULT)
-	obs.obs_properties_add_bool(props, "test_breaks", "Test Breaks Mode")
 	obs.obs_properties_add_bool(props, "fast_mode", "Fast Mode (Accelerated Time)")
-	obs.obs_properties_add_button(props, "start_button", "Start Timer", start_timer)
-	obs.obs_properties_add_button(props, "stop_button", "Stop Timer", stop_timer)
 
 	return props
 end
@@ -207,7 +196,6 @@ local function script_defaults(settings)
 	obs.obs_data_set_default_string(settings, "focus_message", focus_message)
 	obs.obs_data_set_default_string(settings, "short_break_message", short_break_message)
 	obs.obs_data_set_default_string(settings, "long_break_message", long_break_message)
-	obs.obs_data_set_default_bool(settings, "test_breaks", test_breaks)
 	obs.obs_data_set_default_bool(settings, "fast_mode", fast_mode)
 end
 _G.script_defaults = script_defaults
@@ -226,7 +214,6 @@ local function script_save(settings)
 	obs.obs_data_set_string(settings, "focus_message", focus_message)
 	obs.obs_data_set_string(settings, "short_break_message", short_break_message)
 	obs.obs_data_set_string(settings, "long_break_message", long_break_message)
-	obs.obs_data_set_bool(settings, "test_breaks", test_breaks)
 	obs.obs_data_set_bool(settings, "fast_mode", fast_mode)
 end
 _G.script_save = script_save
