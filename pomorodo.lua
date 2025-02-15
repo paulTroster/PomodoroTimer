@@ -1,23 +1,36 @@
--- Pomodoro Pro Timer V1 for OBS By Animal shadow
-obs = obslua
-source_name = "PomodoroTimer" -- Change this to the name of your text source in OBS
-focus_duration_minutes = 90 -- default 90 minutes
-short_break_minutes = 15 -- default 15 minutes
-long_break_minutes = 20 -- default 20 minutes
-timer_active = false
-time_left = focus_duration_minutes * 60
-session_count = 0
-mode = "focus" -- Initialize the mode as focus
+-- luacheck: globals obslua script_properties script_load script_save script_update start_timer stop_timer
+-- The global variable 'obslua' is provided by OBS.
+local obs = obslua
+
+----------------------------------------------------------
+-- Configuration Defaults (locals)
+----------------------------------------------------------
+local source_name = "PomodoroTimer" -- Name of your text source in OBS
+local focus_duration_minutes = 90 -- Focus duration (minutes)
+local short_break_minutes = 15 -- Short break duration (minutes)
+local long_break_minutes = 20 -- Long break duration (minutes)
 
 -- Customizable messages
-focus_message = "Focus Time!" -- Default focus message
-short_break_message = "Short Break!" -- Default short break message
-long_break_message = "Long Break!" -- Default long break message
+local focus_message = "Focus Time!"
+local short_break_message = "Short Break!"
+local long_break_message = "Long Break!"
 
--- Function to set the timer text
-function set_timer_text(text)
+----------------------------------------------------------
+-- Timer State Variables (locals)
+----------------------------------------------------------
+local timer_active = false
+local time_left = focus_duration_minutes * 60
+local session_count = 0
+local mode = "focus" -- Modes: "focus", "short_break", "long_break"
+
+----------------------------------------------------------
+-- Utility Functions (locals)
+----------------------------------------------------------
+
+-- Update the OBS text source with the provided text
+local function set_timer_text(text)
 	local source = obs.obs_get_source_by_name(source_name)
-	if source ~= nil then
+	if source then
 		local settings = obs.obs_data_create()
 		obs.obs_data_set_string(settings, "text", text)
 		obs.obs_source_update(source, settings)
@@ -26,8 +39,30 @@ function set_timer_text(text)
 	end
 end
 
--- Timer callback function
-function timer_callback()
+-- Format seconds as MM:SS
+local function format_time(seconds)
+	local minutes = math.floor(seconds / 60)
+	local secs = seconds % 60
+	return string.format("%02d:%02d", minutes, secs)
+end
+
+-- Load configuration settings from OBS
+local function load_config(settings)
+	focus_duration_minutes = obs.obs_data_get_int(settings, "focus_duration_minutes") or focus_duration_minutes
+	short_break_minutes = obs.obs_data_get_int(settings, "short_break_minutes") or short_break_minutes
+	long_break_minutes = obs.obs_data_get_int(settings, "long_break_minutes") or long_break_minutes
+	source_name = obs.obs_data_get_string(settings, "source_name") or source_name
+	focus_message = obs.obs_data_get_string(settings, "focus_message") or focus_message
+	short_break_message = obs.obs_data_get_string(settings, "short_break_message") or short_break_message
+	long_break_message = obs.obs_data_get_string(settings, "long_break_message") or long_break_message
+end
+
+----------------------------------------------------------
+-- Timer Functions
+----------------------------------------------------------
+
+-- Timer callback function (called every second)
+local function timer_callback()
 	if not timer_active then
 		return
 	end
@@ -35,45 +70,51 @@ function timer_callback()
 	time_left = time_left - 1
 
 	if time_left <= 0 then
-		if session_count % 4 == 0 and session_count ~= 0 then
-			time_left = long_break_minutes * 60
-			set_timer_text(long_break_message)
-			mode = "long_break"
-		elseif mode == "focus" then
-			time_left = short_break_minutes * 60
-			set_timer_text(short_break_message)
-			mode = "break"
+		if mode == "focus" then
+			session_count = session_count + 1
+			if session_count % 4 == 0 then
+				mode = "long_break"
+				time_left = long_break_minutes * 60
+				set_timer_text(long_break_message)
+			else
+				mode = "short_break"
+				time_left = short_break_minutes * 60
+				set_timer_text(short_break_message)
+			end
 		else
+			mode = "focus"
 			time_left = focus_duration_minutes * 60
 			set_timer_text(focus_message)
-			mode = "focus"
-			session_count = session_count + 1
 		end
 	else
-		local minutes = math.floor(time_left / 60)
-		local seconds = time_left % 60
-		set_timer_text(string.format("%02d:%02d", minutes, seconds))
+		set_timer_text(format_time(time_left))
 	end
 end
 
--- Function to start the timer
+----------------------------------------------------------
+-- OBS Callback Functions (globals)
+----------------------------------------------------------
+
+-- Function to start the timer (must be global for OBS)
 function start_timer(pressed)
-	if not timer_active then
-		timer_active = true
-		time_left = focus_duration_minutes * 60 -- Reset time to full duration
-		mode = "focus" -- Reset mode to focus
-		session_count = 0 -- Reset session count
-		set_timer_text(focus_message) -- Show the initial focus message
-		obs.timer_add(timer_callback, 1000)
+	if timer_active then
+		return
 	end
+
+	timer_active = true
+	time_left = focus_duration_minutes * 60 -- Reset to full focus duration
+	mode = "focus"
+	session_count = 0
+	set_timer_text(focus_message)
+	obs.timer_add(timer_callback, 1000)
 end
 
--- Function to stop the timer
+-- Function to stop the timer (must be global for OBS)
 function stop_timer(pressed)
 	if timer_active then
 		timer_active = false
 		obs.timer_remove(timer_callback)
-		set_timer_text("Timer Stopped") -- Update text to indicate stopped timer
+		set_timer_text("Timer Stopped")
 	end
 end
 
@@ -94,18 +135,12 @@ function script_properties()
 	return props
 end
 
--- Load the script settings
+-- Load the script settings from OBS
 function script_load(settings)
-	focus_duration_minutes = obs.obs_data_get_int(settings, "focus_duration_minutes") or focus_duration_minutes
-	short_break_minutes = obs.obs_data_get_int(settings, "short_break_minutes") or short_break_minutes
-	long_break_minutes = obs.obs_data_get_int(settings, "long_break_minutes") or long_break_minutes
-	source_name = obs.obs_data_get_string(settings, "source_name") or source_name
-	focus_message = obs.obs_data_get_string(settings, "focus_message") or focus_message
-	short_break_message = obs.obs_data_get_string(settings, "short_break_message") or short_break_message
-	long_break_message = obs.obs_data_get_string(settings, "long_break_message") or long_break_message
+	load_config(settings)
 end
 
--- Save the script settings
+-- Save the script settings to OBS
 function script_save(settings)
 	obs.obs_data_set_int(settings, "focus_duration_minutes", focus_duration_minutes)
 	obs.obs_data_set_int(settings, "short_break_minutes", short_break_minutes)
@@ -116,13 +151,7 @@ function script_save(settings)
 	obs.obs_data_set_string(settings, "long_break_message", long_break_message)
 end
 
--- Update the script settings
+-- Update the script settings when changed in OBS
 function script_update(settings)
-	focus_duration_minutes = obs.obs_data_get_int(settings, "focus_duration_minutes") or focus_duration_minutes
-	short_break_minutes = obs.obs_data_get_int(settings, "short_break_minutes") or short_break_minutes
-	long_break_minutes = obs.obs_data_get_int(settings, "long_break_minutes") or long_break_minutes
-	source_name = obs.obs_data_get_string(settings, "source_name") or source_name
-	focus_message = obs.obs_data_get_string(settings, "focus_message") or focus_message
-	short_break_message = obs.obs_data_get_string(settings, "short_break_message") or short_break_message
-	long_break_message = obs.obs_data_get_string(settings, "long_break_message") or long_break_message
+	load_config(settings)
 end
