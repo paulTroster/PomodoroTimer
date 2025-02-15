@@ -2,6 +2,8 @@
 
 A versatile and fully customizable Pomodoro Timer script built specifically for OBS Studio. This script helps you manage your focus sessions and breaks while streaming or recording, keeping both you and your audience informed about your progress.
 
+<img width="1469" alt="PomodoroTimerPircute" src="https://github.com/user-attachments/assets/520fa2a7-321d-4cdf-b2d8-7fd22141ded0" />
+
 ---
 
 ## What It Does
