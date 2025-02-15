@@ -29,13 +29,13 @@ A versatile and fully customizable Pomodoro Timer script built specifically for 
 ## Installation
 
 1. **Download the Script:**  
-   Save the `pomorodo.lua` file to your computer.
+   Save the `pomodoro.lua` file to your computer.
 
 2. **Launch OBS Studio:**  
    Open OBS and go to **Tools > Scripts**.
 
 3. **Add the Script:**  
-   Click the **+** button in the Scripts window and select the `pomorodo.lua` file.
+   Click the **+** button in the Scripts window and select the `pomodoro.lua` file.
 
 4. **Configure the Script:**  
    - Enter the OBS text source name where the timer should be displayed.
