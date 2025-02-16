@@ -7,7 +7,7 @@ local obs = obslua
 local source_name = "PomodoroTimer" -- Name of your text source in OBS
 local sound_source_name = "AlertSound" -- Name of your media source for playing sound
 
-local focus_duration_minutes = 60 -- Focus duration (minutes)
+local focus_duration_minutes = 50 -- Focus duration (minutes)
 local short_break_minutes = 10 -- Short break duration (minutes)
 local long_break_minutes = 10 -- Long break duration (minutes)
 
@@ -44,7 +44,7 @@ local function set_timer_text(text)
 		local settings = obs.obs_data_create()
 		local header = ""
 		if mode == "focus" then
-			header = string.format("Session: %d / %d", session_count, session_limit)
+			header = string.format("Session: %d / %d", session_count + 1, session_limit)
 		else
 			header = "Break"
 		end
@@ -86,6 +86,8 @@ local function load_config(settings)
 	focus_message = obs.obs_data_get_string(settings, "focus_message") or focus_message
 	short_break_message = obs.obs_data_get_string(settings, "short_break_message") or short_break_message
 	long_break_message = obs.obs_data_get_string(settings, "long_break_message") or long_break_message
+
+	session_limit = obs.obs_data_get_int(settings, "session_limit") or session_limit
 
 	fast_mode = obs.obs_data_get_bool(settings, "fast_mode")
 	time_multiplier = fast_mode and 60 or 1
@@ -172,8 +174,7 @@ local function script_properties()
 	obs.obs_properties_add_button(props, "start_button", "Start Timer", start_timer)
 	obs.obs_properties_add_button(props, "stop_button", "Stop Timer", stop_timer)
 
-	obs.obs_properties_add_text(props, "source_name", "Text Source Name", obs.OBS_TEXT_DEFAULT)
-	obs.obs_properties_add_text(props, "sound_source_name", "Sound Source Name", obs.OBS_TEXT_DEFAULT)
+	obs.obs_properties_add_int(props, "session_limit", "Session Limit (hours)", 1, 24, 1)
 	obs.obs_properties_add_int(props, "focus_duration_minutes", "Focus Duration (minutes)", 1, 180, 1)
 	obs.obs_properties_add_int(props, "short_break_minutes", "Short Break (minutes)", 1, 30, 1)
 	obs.obs_properties_add_int(props, "long_break_minutes", "Long Break (minutes)", 1, 60, 1)
@@ -181,6 +182,8 @@ local function script_properties()
 	obs.obs_properties_add_text(props, "short_break_message", "Short Break Message", obs.OBS_TEXT_DEFAULT)
 	obs.obs_properties_add_text(props, "long_break_message", "Long Break Message", obs.OBS_TEXT_DEFAULT)
 	obs.obs_properties_add_bool(props, "fast_mode", "Fast Mode (Accelerated Time)")
+	obs.obs_properties_add_text(props, "source_name", "Text Source Name", obs.OBS_TEXT_DEFAULT)
+	obs.obs_properties_add_text(props, "sound_source_name", "Sound Source Name", obs.OBS_TEXT_DEFAULT)
 
 	return props
 end
@@ -188,6 +191,7 @@ _G.script_properties = script_properties
 
 -- Set default values so that OBS loads your defaults in the properties.
 local function script_defaults(settings)
+	obs.obs_data_set_default_int(settings, "session_limit", session_limit)
 	obs.obs_data_set_default_int(settings, "focus_duration_minutes", focus_duration_minutes)
 	obs.obs_data_set_default_int(settings, "short_break_minutes", short_break_minutes)
 	obs.obs_data_set_default_int(settings, "long_break_minutes", long_break_minutes)
@@ -206,6 +210,7 @@ end
 _G.script_load = script_load
 
 local function script_save(settings)
+	obs.obs_data_set_int(settings, "session_limit", session_limit)
 	obs.obs_data_set_int(settings, "focus_duration_minutes", focus_duration_minutes)
 	obs.obs_data_set_int(settings, "short_break_minutes", short_break_minutes)
 	obs.obs_data_set_int(settings, "long_break_minutes", long_break_minutes)
