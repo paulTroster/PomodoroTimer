@@ -154,7 +154,7 @@ local function update_timer()
 		local timer_display = string.format(
 			"%s\nSession: %d/%d\n%02d:%02d",
 			focus_message,
-			session_count,
+			session_count + 1,
 			session_limit,
 			minutes,
 			seconds
