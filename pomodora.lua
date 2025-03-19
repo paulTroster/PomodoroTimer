@@ -9,7 +9,7 @@ local sound_source_name = "AlertSound" -- Media source that plays a short alert/
 local break_bgm_source_name = "BreakBGM" -- Media source that plays background music during break
 local session_limit_bgm_source_name = "SessionLimitMusic" -- Media source that plays at session limit
 
-local focus_duration_minutes = 50
+local focus_duration_minutes = 240 
 local short_break_minutes = 10
 local long_break_minutes = 10 -- Not actively used, kept for compatibility
 
@@ -174,6 +174,7 @@ end
 ----------------------------------------------------------
 function start_timer()
 	if not timer_active then
+		time_left = focus_duration_minutes * 60
 		timer_active = true
 	end
 end
@@ -195,6 +196,13 @@ function script_unload()
 	obs.timer_remove(update_timer)
 end
 
+-- Updated script description with the new skip functionality
+function script_description()
+	return "Pomodoro Timer Script<br>" ..
+	       "This script controls focus sessions and breaks. Use the Start, Stop, and Skip Session buttons.<br>" ..
+	       "Skip Session instantly ends the current phase (focus or break) and moves to the next one."
+end
+
 -- Button handler for Start
 local function on_start_button_clicked(props, property)
 	start_timer()
@@ -207,14 +215,42 @@ local function on_stop_button_clicked(props, property)
 	return false
 end
 
--- Create the Script Properties
+-- Updated Button handler for Skip Session (skips current session regardless of mode)
+local function on_skip_timer_button_clicked(props, property)
+	if mode == "focus" then
+		-- Skip focus: simulate end of focus session
+		session_count = session_count + 1
+		if session_count >= session_limit then
+			set_timer_text(session_limit_reached_message)
+			timer_active = false
+			play_media_source(session_limit_bgm_source_name)
+		else
+			mode = "short_break"
+			time_left = short_break_minutes * 60
+			set_timer_text(short_break_message)
+			play_alert_sound()
+			play_media_source(break_bgm_source_name)
+		end
+	else
+		-- Skip break: simulate end of break session
+		stop_media_source(break_bgm_source_name)
+		play_alert_sound()
+		mode = "focus"
+		time_left = focus_duration_minutes * 60
+		set_timer_text(focus_message)
+	end
+	return false
+end
+
+-- Updated Script Properties to reflect new button label
 function script_properties()
 	local props = obs.obs_properties_create()
 
-	-- 1) START/STOP BUTTONS AT THE TOP
+	-- 1) START/STOP/SKIP BUTTONS AT THE TOP
 	obs.obs_properties_add_button(props, "start_timer_button", "Start Timer", on_start_button_clicked)
 	obs.obs_properties_add_button(props, "stop_timer_button", "Stop Timer", on_stop_button_clicked)
-
+	obs.obs_properties_add_button(props, "skip_timer_button", "Skip Session", on_skip_timer_button_clicked)
+	
 	-- 2) CHECKBOX FOR FAST MODE
 	obs.obs_properties_add_bool(props, "fast_mode", "Fast Mode (Testing)")
 
