@@ -11,10 +11,12 @@ local session_limit_bgm_source_name = "SessionLimitMusic" -- Media source that p
 
 local focus_duration_minutes = 240 
 local short_break_minutes = 10
+local long_break_minutes = 10 -- Not actively used, kept for compatibility
 
 -- Messages
 local focus_message = "Focus Time!"
 local short_break_message = "Short Break!"
+local long_break_message = "Long Break!" -- Not used
 local session_limit_reached_message = "Session Limit Reached!"
 
 local session_limit = 4
@@ -265,6 +267,7 @@ function script_properties()
 
 	obs.obs_properties_add_int(props, "focus_duration", "Focus Minutes", 1, 1440, 1)
 	obs.obs_properties_add_int(props, "short_break_minutes", "Short Break Minutes", 1, 1440, 1)
+	obs.obs_properties_add_int(props, "long_break_minutes", "Long Break Minutes", 1, 1440, 1)
 	obs.obs_properties_add_int(props, "session_limit", "Session Limit", 1, 100, 1)
 
 	obs.obs_properties_add_text(
@@ -291,6 +294,7 @@ function script_update(settings)
 
 	focus_duration_minutes = obs.obs_data_get_int(settings, "focus_duration")
 	short_break_minutes = obs.obs_data_get_int(settings, "short_break_minutes")
+	long_break_minutes = obs.obs_data_get_int(settings, "long_break_minutes")
 	session_limit = obs.obs_data_get_int(settings, "session_limit")
 
 	session_limit_reached_message = obs.obs_data_get_string(settings, "session_limit_reached_message")
@@ -305,6 +309,7 @@ function script_defaults(settings)
 
 	obs.obs_data_set_default_int(settings, "focus_duration", focus_duration_minutes)
 	obs.obs_data_set_default_int(settings, "short_break_minutes", short_break_minutes)
+	obs.obs_data_set_default_int(settings, "long_break_minutes", long_break_minutes)
 	obs.obs_data_set_default_int(settings, "session_limit", session_limit)
 
 	obs.obs_data_set_default_string(settings, "session_limit_reached_message", session_limit_reached_message)

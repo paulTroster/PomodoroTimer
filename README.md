@@ -30,21 +30,21 @@ A versatile and fully customizable Pomodoro Timer script built specifically for 
 
 ## Installation
 
-1. **Download the Script Files:**  
-   Clone the repository or download all the files from the project. Ensure the following files are located in the same directory:  
-   - `config.lua`  
-   - `utils.lua`  
-   - `timer.lua`  
-   - `main.lua`
+1. **Download the Script:**  
+   Save the `pomodoro.lua` file to your computer.
 
 2. **Launch OBS Studio:**  
-   Open OBS Studio and navigate to **Tools > Scripts**.
+   Open OBS and go to **Tools > Scripts**.
 
 3. **Add the Script:**  
-   Click the **+** button in the Scripts window and select the `main.lua` file.
+   Click the **+** button in the Scripts window and select the `pomodoro.lua` file.
 
-4. **Configure Script Settings:**  
-   In the OBS Scripts interface, adjust the settings such as the OBS text source, media source names, timer durations, and messages according to your preferences.
+4. **Configure the Script:**  
+   - Enter the OBS text source name where the timer should be displayed.
+   - Specify the media source name for sound alerts.
+   - Adjust the focus, short break, and long break durations.
+   - Customize the messages for each period.
+   - Enable Fast Mode if you want accelerated timer progression (ideal for testing).
 
 ---
 
