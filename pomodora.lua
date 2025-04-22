@@ -9,7 +9,7 @@ local sound_source_name = "AlertSound" -- Media source that plays a short alert/
 local break_bgm_source_name = "BreakBGM" -- Media source that plays background music during break
 local session_limit_bgm_source_name = "SessionLimitMusic" -- Media source that plays at session limit
 
-local focus_duration_minutes = 240 
+local focus_duration_minutes = 240
 local short_break_minutes = 10
 local long_break_minutes = 10 -- Not actively used, kept for compatibility
 
@@ -198,9 +198,9 @@ end
 
 -- Updated script description with the new skip functionality
 function script_description()
-	return "Pomodoro Timer Script<br>" ..
-	       "This script controls focus sessions and breaks. Use the Start, Stop, and Skip Session buttons.<br>" ..
-	       "Skip Session instantly ends the current phase (focus or break) and moves to the next one."
+	return "Pomodoro Timer Script<br>"
+		.. "This script controls focus sessions and breaks. Use the Start, Stop, and Skip Session buttons.<br>"
+		.. "Skip Session instantly ends the current phase (focus or break) and moves to the next one."
 end
 
 -- Button handler for Start
@@ -250,7 +250,7 @@ function script_properties()
 	obs.obs_properties_add_button(props, "start_timer_button", "Start Timer", on_start_button_clicked)
 	obs.obs_properties_add_button(props, "stop_timer_button", "Stop Timer", on_stop_button_clicked)
 	obs.obs_properties_add_button(props, "skip_timer_button", "Skip Session", on_skip_timer_button_clicked)
-	
+
 	-- 2) CHECKBOX FOR FAST MODE
 	obs.obs_properties_add_bool(props, "fast_mode", "Fast Mode (Testing)")
 
