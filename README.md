@@ -84,3 +84,11 @@ Boost your productivity and streamline your streaming sessions with the **Pomodo
 
 This project is based upon this entry on the OBS forum:
 https://obsproject.com/forum/resources/pomodoro-pro-timer-for-obs.1859/
+
+--- 
+
+Usefull resources
+
+https://github.com/obsproject/obs-studio/blob/master/libobs/obs-source.h
+
+https://github.com/obsproject/obs-studio/blob/master/libobs/obs-data.h
